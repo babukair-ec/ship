@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Module initial config
+ *
+ * @author Magento
+ */
+-->
+<config>
+    <modules>
+        <Shipox_Delivery>
+            <active>true</active>
+            <codePool>community</codePool>
+        </Shipox_Delivery>
+    </modules>
+</config>

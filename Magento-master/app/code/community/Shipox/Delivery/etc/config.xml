@@ -1,0 +1,233 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Module configuration
+ *
+ * @author Shipox Marketplace
+ */
+-->
+<config>
+    <modules>
+        <Shipox_Delivery>
+            <version>1.0.2</version>
+        </Shipox_Delivery>
+    </modules>
+
+    <global>
+        <models>
+            <shipox_delivery>
+                <class>Shipox_Delivery_Model</class>
+                <resourceModel>shipox_resource</resourceModel>
+            </shipox_delivery>
+            <shipox_resource>
+                <class>Shipox_Delivery_Model_Resource</class>
+                <entities>
+                    <shipox>
+                        <table>shipox_delivery</table>
+                    </shipox>
+                </entities>
+            </shipox_resource>
+        </models>
+
+        <blocks>
+            <shipox_delivery>
+                <class>Shipox_Delivery_Block</class>
+            </shipox_delivery>
+        </blocks>
+
+        <helpers>
+            <shipox_delivery>
+                <class>Shipox_Delivery_Helper</class>
+            </shipox_delivery>
+        </helpers>
+
+        <resources>
+            <shipox_delivery_setup>
+                <setup>
+                    <module>Shipox_Delivery</module>
+                    <class>Mage_Core_Model_Resource_Setup</class>
+                </setup>
+            </shipox_delivery_setup>
+        </resources>
+
+        <events>
+            <payment_method_is_active>
+                <observers>
+                    <paymentfilter_payment_method_is_active>
+                        <type>singleton</type>
+                        <class>shipox_delivery/observer</class>
+                        <method>paymentMethodIsActive</method>
+                    </paymentfilter_payment_method_is_active>
+                </observers>
+            </payment_method_is_active>
+
+        </events>
+
+    </global>
+
+    <frontend>
+        <layout>
+            <updates>
+                <address>
+                    <file>shipox.xml</file>
+                </address>
+            </updates>
+        </layout>
+
+        <events>
+            <core_block_abstract_to_html_after>
+                <observers>
+                    <shipoxdelivery_core_block_abstract_to_html_after>
+                        <class>Shipox_Delivery_Model_Observer</class>
+                        <method>customerOrderShipoxTrackerBlock</method>
+                    </shipoxdelivery_core_block_abstract_to_html_after>
+                </observers>
+            </core_block_abstract_to_html_after>
+
+            <sales_order_save_after>
+                <observers>
+                    <shipox_delivery>
+                        <type>singleton</type>
+                        <class>shipox_delivery/observer</class>
+                        <method>pushOrderAfterShipmentCreation</method>
+                    </shipox_delivery>
+                </observers>
+            </sales_order_save_after>
+        </events>
+
+    </frontend>
+
+    <admin>
+        <routers>
+            <adminhtml>
+                <args>
+                    <modules>
+                        <shipox_delivery after="Mage_Adminhtml">Shipox_Delivery_Adminhtml</shipox_delivery>
+                    </modules>
+                </args>
+            </adminhtml>
+        </routers>
+    </admin>
+
+    <adminhtml>
+        <acl>
+            <resources>
+                <all>
+                    <title>Allow Everything</title>
+                </all>
+                <admin>
+                    <children>
+                        <system>
+                            <children>
+                                <config>
+                                    <children>
+                                        <shipox_delivery module="shipox_delivery">
+                                            <title>Shipox Settings</title>
+                                        </shipox_delivery>
+                                    </children>
+                                </config>
+                            </children>
+                        </system>
+                    </children>
+                </admin>
+            </resources>
+        </acl>
+
+        <layout>
+            <updates>
+                <shipox_delivery>
+                    <file>shipox.xml</file>
+                </shipox_delivery>
+            </updates>
+        </layout>
+
+        <events>
+            <core_block_abstract_to_html_after>
+                <observers>
+                    <shipox_delivery_custom_order_view_info>
+                        <class>shipox_delivery/observer</class>
+                        <method>getSalesOrderViewInfo</method>
+                    </shipox_delivery_custom_order_view_info>
+                </observers>
+            </core_block_abstract_to_html_after>
+
+            <sales_order_save_after>
+                <observers>
+                    <shipox_delivery_order_cancel>
+                        <class>shipox_delivery/observer</class>
+                        <method>getOrderWhenCancelled</method>
+                    </shipox_delivery_order_cancel>
+                </observers>
+            </sales_order_save_after>
+        </events>
+    </adminhtml>
+
+    <default>
+        <carriers>
+            <shipox>
+                <active>0</active>
+                <model>shipox_delivery/carrier</model>
+                <allowed_payment_type>cash</allowed_payment_type>
+                <default_weight>0</default_weight>
+                <title>Shipox Delivery</title>
+                <alias>wing</alias>
+                <sort_order>10</sort_order>
+                <base_country_id>229</base_country_id>
+                <intcashondelivery>0</intcashondelivery>
+                <specificcountry>229</specificcountry>
+                <carrier_options>in_5_days</carrier_options>
+                <is_international_available>false</is_international_available>
+                <reordering>0</reordering>
+                <is_create_shipment>1</is_create_shipment>
+                <specificerrmsg>This shipping method is currently unavailable.If you would like to ship using this shipping method, please contact us.</specificerrmsg>
+            </shipox>
+        </carriers>
+        <shipox_delivery>
+            <messages>
+                <cannot_cancel_order>Picked up shipments can't be cancelled. You need to contact the designated courier supplier to reject the delivery. These shipments will be returned to the shipper as per the schedule.</cannot_cancel_order>
+            </messages>
+            <auth>
+                <token_time></token_time>
+            </auth>
+            <service>
+                <sandbox_flag>1</sandbox_flag>
+                <title>Shipox Delivery</title>
+                <site_url>https://www.shipox.com</site_url>
+                <site_short_url>www.shipox.com</site_short_url>
+            </service>
+            <merchant>
+                <pickup>1</pickup>
+                <confirmed_by_recipient>1</confirmed_by_recipient>
+            </merchant>
+        </shipox_delivery>
+        <api>
+            <config>
+                <live>https://prodapi.shipox.com</live>
+                <staging>https://qaapi.shipox.com</staging>
+                <service>LOGISTICS</service>
+            </config>
+            <geo>
+                <url>https://maps.googleapis.com/maps/api/geocode/json?</url>
+                <region>ae</region>
+            </geo>
+            <destination>
+                <authenticate>/api/v1/customer/authenticate</authenticate>
+                <country_list>/api/v1/country/list</country_list>
+                <package_menu>/api/v2/package-menu</package_menu>
+                <city_by_name>/api/v1/city_by_name</city_by_name>
+                <packages_prices>/api/v1/packages/prices</packages_prices>
+                <order>/api/v1/customer/order</order>
+                <order_item>/api/v1/customer/order/order_number</order_item>
+                <status_update>/api/v1/customer/order/{id}/status_update</status_update>
+                <get_airwaybill>/api/v1/customer/order/{id}/airwaybill</get_airwaybill>
+            </destination>
+        </api>
+        <tracking>
+            <config>
+                <live_tracking_url>https://my.shipox.com</live_tracking_url>
+                <prelive_tracking_url>http://my-qa.shipox.com</prelive_tracking_url>
+                <path>/order-tracking/</path>
+            </config>
+        </tracking>
+    </default>
+</config>

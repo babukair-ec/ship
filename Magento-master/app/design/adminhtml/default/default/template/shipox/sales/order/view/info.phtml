@@ -1,0 +1,163 @@
+<?php
+$helper = new Shipox_Delivery_Helper_Data();
+$order = $this->getOrder();
+$shipoxOrderResponse = null;
+?>
+<div class="entry-edit box-left">
+    <div class="entry-edit-head">
+        <h4 class="icon-head"><?php echo $this->__('Wing Delivery Shipment Status') ?></h4>
+    </div>
+    <fieldset>
+        <?php
+
+        $shipoxOrderData = $this->isShipoxOrderCreated($order);
+        $isFrontEndOrder = $this->isShipoxOrderCreatedFromFrontEnd($order);
+        $isPossibleToCreateNewOrder = true;
+        if (!empty($shipoxOrderData)) {
+            $isPossibleToCreateNewOrder = false;
+
+            ?>
+            <span class="field-row">
+                <strong><?php echo $this->__('Order Tracking URL') ?>:</strong> <a
+                        href="<?php echo $helper->getOrderTrackerURL($shipoxOrderData) ?>"
+                        target="_blank"
+                        title="<?php echo '#' . $shipoxOrderData['wing_order_number'] ?>"><?php echo '#' . $shipoxOrderData['wing_order_number'] ?></a>
+            </span>
+            <?php
+            $shipoxOrderResponse = $this->getShipoxOrderDetailInfo($shipoxOrderData['wing_order_number'], $order);
+
+            if (!empty($shipoxOrderResponse)) {
+                $orderAirWayBill = $this->getOrderAirWayBill($shipoxOrderResponse['id']);
+
+                ?>
+                <span class="field-row">
+                    <strong><?php echo $this->__('Order Status') ?>
+                        :</strong> <?php echo $shipoxOrderResponse['status_object']['label']; ?>
+                </span>
+                <span class="field-row">
+                    <strong><?php echo $this->__('Estimated Delivery') ?>
+                        :</strong> <?php echo $shipoxOrderResponse['estimated_delivery_date']; ?>
+                </span>
+                <?php
+                if (!is_null($orderAirWayBill)) { ?>
+                    <span class="field-row">
+                        <strong><?php echo $this->__('Wing AirWayBill') ?>
+                            :</strong> <a href="<?php echo $orderAirWayBill; ?>" target="_blank">Download AirWayBill</a>
+                    </span>
+                <?php } ?>
+                <?php
+
+                if (!$isFrontEndOrder) {
+                    if ($shipoxOrderResponse['status_object']['cancellable']) {
+                        ?>
+                        <form id="shipoxCancelOrderForm"
+                              onsubmit="shipoxOrderController.cancelWingOrder(event, 'shipoxCancelOrderForm')">
+                        <span class="field-row">
+                            <label for="cancelReason"><strong><?php echo $this->__('Reason') ?>:</strong></label><br/>
+                            <textarea name="cancelReason" id="cancelReason" rows="5" cols="50"></textarea>
+                        </span>
+                            <input type="hidden" name="orderId" value="<?php echo $order->getId(); ?>"/>
+                            <span class="field-row">
+                            <button class="scalable save" id="cancelOrder">
+                                <span><span><?php echo $this->__('Cancel Order') ?></span></span>
+                            </button>
+                        </span>
+                        </form>
+                        <?php
+                    }
+                }
+
+                if (!$shipoxOrderResponse['status_object']['cancellable'] && $this->showShipoxOrderCancelField($shipoxOrderResponse['status'])) {
+                    ?>
+                    <span class="field-row"
+                          style="display: block; padding: 10px; border-radius: 4px; background-color: #fcf8e3; border: 1px solid #faebcc; color: #8a6d3b">
+                            <?php echo Mage::getStoreConfig('shipox_delivery/messages/cannot_cancel_order'); ?>
+                        </span>
+                    <?php
+                }
+            }
+        }
+
+        if (!$isFrontEndOrder) {
+            if($helper->canRecreateShipoxOrder($isPossibleToCreateNewOrder, $shipoxOrderResponse)) {
+                $shipoxPackages = $this->getProperPackagesForOrder($order);
+                if ($shipoxPackages['status']) {
+                    $priceArr = $shipoxPackages['data'];
+                    $menuId = $shipoxPackages['menuId'];
+                    ?>
+                    <br />
+                    <form id="shipoxOrderForm" onsubmit="shipoxOrderController.pushShipoxOrder(event, 'shipoxOrderForm')">
+                    <span class="field-row">
+                        <label for="packageType"><?php echo $this->__('Select Package') ?>: </label>
+                        <select id="packageType" name="packageName" class="select">
+                            <?php foreach ($priceArr as $method => $label) { ?>
+                                <option value="<?php echo $method ?>"><?php echo $label['label'] . " - " . $label['amount'] . " " . $order['currency']; ?></option>
+                            <?php } ?>
+                        </select>
+                        <input type="hidden" name="menuId" value="<?php echo $menuId; ?>"/>
+                        <input type="hidden" name="orderId" value="<?php echo $order->getId(); ?>"/>
+                    </span>
+                        <span class="field-row">
+                        <label for="packageNote"><?php echo $this->__('Package Note') ?>: </label>
+                        <textarea id="packageNote" name="packageNote" cols="50" rows="4"></textarea>
+                    </span>
+                        <span class="field-row">
+                        <button class="scalable save" id="createOrder">
+                            <span><span><?php echo (is_null($shipoxOrderResponse)) ? $this->__('Create Order') : $this->__('Recreate Order') ?></span></span>
+                        </button>
+                    </span>
+                    </form>
+                    <?php
+                }
+            }
+        }
+        ?>
+    </fieldset>
+</div>
+<script>
+    $j = jQuery.noConflict();
+
+    var shipoxOrderController = {
+
+        pushShipoxOrder: function (event, container) {
+            event.preventDefault();
+            var $loader = document.getElementById('loading-mask');
+            $loader.show();
+
+            var $form = $j('#' + container).serialize();
+            var $formKey = "<?php echo Mage::getSingleton('core/session')->getFormKey(); ?>";
+
+            $j.post("<?php echo Mage::helper('adminhtml')->getUrl('adminhtml/shipoxadmin/createorder'); ?>", $form + "&form_key=" + $formKey,
+                function (data) {
+                    $loader.hide();
+                    alert(data['message']);
+                    window.location.reload();
+                }, 'json').fail(function () {
+                $loader.hide();
+                alert('There is some error');
+                window.location.reload();
+            })
+        },
+
+        cancelShipoxOrder: function (event, container) {
+            event.preventDefault();
+            var $loader = document.getElementById('loading-mask');
+            $loader.show();
+
+            var $form = $j('#' + container).serialize();
+            var $formKey = "<?php echo Mage::getSingleton('core/session')->getFormKey(); ?>";
+
+            $j.post("<?php echo Mage::helper('adminhtml')->getUrl('adminhtml/shipoxadmin/cancelorder'); ?>", $form + "&form_key=" + $formKey,
+                function (data) {
+                    $loader.hide();
+                    alert(data['message']);
+                    window.location.reload();
+                }, 'json').fail(function () {
+                $loader.hide();
+                alert('There is some error');
+                window.location.reload();
+            })
+        }
+    }
+</script>
+<div class="clear"></div>

@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<layout version="1.0.0">
+    <checkout_onepage_success translate="label">
+        <label>One Page Checkout Success</label>
+        <reference name="content">
+            <block type="shipox_delivery/tracker" name="shipox.checkout.success" template="shipox/checkout/onepage/success.phtml"/>
+        </reference>
+    </checkout_onepage_success>
+
+
+    <sales_order_view>
+        <reference name="sales.order.info">
+            <block type="sales/order_info" name="shipox.order.info.customer" template="shipox/sales/order/view/customer_order_tracking_block.phtml" />
+        </reference>
+    </sales_order_view>
+
+    <sales_order_print>
+        <reference name="content">
+            <block type="shipox_delivery/tracker"
+                   name="shipox.order.info.print"
+                   template="shipox/sales/order/print/print.phtml"
+            />
+        </reference>
+    </sales_order_print>
+
+
+</layout>

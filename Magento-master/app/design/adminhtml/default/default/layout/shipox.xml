@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<layout version="1.0.0">
+    <adminhtml_sales_order_view>
+        <reference name="head">
+            <action method="addItem"><type>skin_js</type><name>shipox/js/jquery.min.js</name></action>
+            <action method="addItem"><type>skin_js</type><name>shipox/js/helper.js</name></action>
+        </reference>
+        <reference name="order_info">
+            <block type="shipox_delivery/adminhtml_sales_order_view_info_block"
+                   name="shipox.order.info.block"
+                   template="shipox/sales/order/view/info.phtml"
+                   before="order_history"
+            >
+            </block>
+        </reference>
+    </adminhtml_sales_order_view>
+
+    <adminhtml_sales_order_shipment_new>
+        <reference name="content">
+            <block type="shipox_delivery/adminhtml_sales_order_shipment_view_info_block"
+                   name="shipox.order.shipment.info.block"
+                   template="shipox/sales/order/shipment/new/shipment.phtml"
+            >
+            </block>
+        </reference>
+    </adminhtml_sales_order_shipment_new>
+</layout>
